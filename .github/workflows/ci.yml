@@ -60,6 +60,28 @@ jobs:
           save-sdk: 'true'     # the only writer of the shared SDK cache entry
       - run: make build
         env: { LINT: '1', SKIP_TESTS: '0' }
+              - name: Verify APK signature and boot receiver
+        run: |
+          set -euo pipefail
+
+          echo "=== Checking BootReceiver patch ==="
+          grep -R -n "BootReceiver" patches/
+
+          APK="$(find dist -maxdepth 1 -name '*.apk' -print -quit)"
+          test -n "$APK"
+
+          SDK="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          TOOLS="$SDK/build-tools/36.0.0"
+
+          echo "=== APK signature ==="
+          "$TOOLS/apksigner" verify --verbose --print-certs "$APK"
+
+          echo "=== APK package details ==="
+          "$TOOLS/aapt" dump badging "$APK" | head -n 8
+
+          echo "=== Boot receiver and permissions ==="
+          "$TOOLS/aapt" dump xmltree "$APK" AndroidManifest.xml \
+            | grep -E "BootReceiver|BOOT_COMPLETED|RECEIVE_BOOT_COMPLETED"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: tailscale-fireos5-apk
