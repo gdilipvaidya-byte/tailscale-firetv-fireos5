@@ -1,8 +1,9 @@
 name: CI
 on:
+  workflow_dispatch:
   pull_request:
   push:
-    branches: [main]          # seeds caches PRs can read: setup-gradle saves only here, and
+    branches: [main]    # seeds caches PRs can read: setup-gradle saves only here, and
                               # actions/cache entries saved from main are visible to every PR
   workflow_call:              # upstream-drift.yml runs tiers 0-2 against another ref
     inputs:
